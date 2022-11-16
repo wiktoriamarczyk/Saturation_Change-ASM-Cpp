@@ -1,4 +1,5 @@
 #include <iostream>
+#include "MainWindow.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -111,13 +112,23 @@ hsvcolor rgbtohsv(rgbcolor rgb)
     return hsv;
 }
 
+int RunQT(int argc, char** argv)
+{
+    QApplication app(argc, argv);
+
+    MainWindow Wnd;
+
+    Wnd.show();
+
+    return app.exec();
+}
+
+
 
 int main()
 {
-    char dupa = 5;
-    char smieci = 7;
-    char wynik = dupa * smieci;
-    cout << int(wynik) << endl;
+    RunQT(0, nullptr);
+
 
 
     int width = 0;

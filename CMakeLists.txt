@@ -19,6 +19,8 @@ SET(APP_SRC_FILES_LIST
     SaturationChange/MainWindow.ui
     SaturationChange/MainWindow.h
     SaturationChange/MainWindow.cpp
+	SaturationChange/Pixel.h
+	SaturationChange/Pixel.cpp
 )
 
 #*****************************************************

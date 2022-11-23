@@ -9,6 +9,6 @@ public:
     MainWindow();
 protected:
 private slots:
-    void Test();
+    void runButtonPressed();
 private:
 };

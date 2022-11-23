@@ -2,24 +2,16 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>1200</width>
-    <height>800</height>
-   </rect>
-  </property>
   <property name="minimumSize">
    <size>
     <width>1200</width>
-    <height>800</height>
+    <height>750</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>1200</width>
-    <height>800</height>
+    <height>750</height>
    </size>
   </property>
   <property name="font">
@@ -55,7 +47,7 @@
     <property name="geometry">
      <rect>
       <x>750</x>
-      <y>560</y>
+      <y>550</y>
       <width>89</width>
       <height>20</height>
      </rect>
@@ -74,7 +66,7 @@
     <property name="geometry">
      <rect>
       <x>750</x>
-      <y>590</y>
+      <y>580</y>
       <width>89</width>
       <height>20</height>
      </rect>
@@ -133,7 +125,7 @@
     <property name="geometry">
      <rect>
       <x>740</x>
-      <y>640</y>
+      <y>630</y>
       <width>160</width>
       <height>22</height>
      </rect>
@@ -152,9 +144,9 @@
     <property name="geometry">
      <rect>
       <x>760</x>
-      <y>670</y>
+      <y>650</y>
       <width>81</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="font">
@@ -171,7 +163,7 @@
     <property name="geometry">
      <rect>
       <x>1000</x>
-      <y>540</y>
+      <y>530</y>
       <width>101</width>
       <height>41</height>
      </rect>
@@ -190,7 +182,7 @@
     <property name="geometry">
      <rect>
       <x>1000</x>
-      <y>600</y>
+      <y>590</y>
       <width>101</width>
       <height>41</height>
      </rect>
@@ -209,7 +201,7 @@
     <property name="geometry">
      <rect>
       <x>1000</x>
-      <y>660</y>
+      <y>650</y>
       <width>101</width>
       <height>41</height>
      </rect>
@@ -227,8 +219,8 @@
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>580</y>
+      <x>110</x>
+      <y>560</y>
       <width>131</width>
       <height>31</height>
      </rect>
@@ -252,8 +244,8 @@
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>620</y>
+      <x>110</x>
+      <y>600</y>
       <width>121</width>
       <height>31</height>
      </rect>
@@ -271,8 +263,8 @@
    <widget class="QLabel" name="asmTimeLabel">
     <property name="geometry">
      <rect>
-      <x>230</x>
-      <y>580</y>
+      <x>210</x>
+      <y>560</y>
       <width>121</width>
       <height>31</height>
      </rect>
@@ -290,8 +282,8 @@
    <widget class="QLabel" name="cppTimeLabel">
     <property name="geometry">
      <rect>
-      <x>230</x>
-      <y>620</y>
+      <x>210</x>
+      <y>600</y>
       <width>121</width>
       <height>31</height>
      </rect>
@@ -309,8 +301,8 @@
    <widget class="QRadioButton" name="originalResButton">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>580</y>
+      <x>370</x>
+      <y>560</y>
       <width>211</width>
       <height>31</height>
      </rect>
@@ -328,8 +320,8 @@
    <widget class="QRadioButton" name="scaledResButton">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>620</y>
+      <x>370</x>
+      <y>600</y>
       <width>181</width>
       <height>31</height>
      </rect>

@@ -10,5 +10,6 @@ public:
 protected:
 private slots:
     void runButtonPressed();
+    void satSliderChanged();
 private:
 };

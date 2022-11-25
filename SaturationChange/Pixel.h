@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-using namespace std;
 
 struct rgb
 {
@@ -10,51 +9,46 @@ struct rgb
     unsigned char a;
 };
 
+struct hsv
+{
+    unsigned char h;
+    unsigned char s;
+    unsigned char v;
+    unsigned char a;
+};
+
 class Pixel
 {
 public:
-    Pixel(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
-    {
-        this->r = r;
-        this->g = g;
-        this->b = b;
-        this->a = a;
-
-        calcHSV();
-    }
-
-    Pixel(rgb RGB) : Pixel(RGB.r, RGB.g, RGB.b, RGB.a) {};
+    Pixel(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    Pixel(rgb inputRGB) : Pixel(inputRGB.r, inputRGB.g, inputRGB.b, inputRGB.a) {};
+    Pixel(hsv inputHSV);
 
     operator rgb();
+    operator hsv();
 
-    unsigned char getR() { return r; };
-    unsigned char getG() { return g; };
-    unsigned char getB() { return b; };
-    unsigned char getA() { return a; };
+    unsigned char getR() { return RGB.r; };
+    unsigned char getG() { return RGB.g; };
+    unsigned char getB() { return RGB.b; };
+    unsigned char getA() { return RGB.a; };
 
-    unsigned char getH() { return h; };
-    unsigned char getS() { return s; };
-    unsigned char getV() { return v; };
+    unsigned char getH() { return HSV.h; };
+    unsigned char getS() { return HSV.s; };
+    unsigned char getV() { return HSV.v; };
 
-    void setR(unsigned char r) { this->r = r; calcHSV(); };
-    void setG(unsigned char g) { this->g = g; calcHSV(); };
-    void setB(unsigned char b) { this->b = b; calcHSV(); };
-    void setA(unsigned char a) { this->a = a; };
+    void setR(unsigned char r) { this->RGB.r = r; calcHSV();       };
+    void setG(unsigned char g) { this->RGB.g = g; calcHSV();       };
+    void setB(unsigned char b) { this->RGB.b = b; calcHSV();       };
+    void setA(unsigned char a) { this->RGB.a = a; this->HSV.a = a; };
 
-    void setH(unsigned char h) { this->h = h; calcRGB(); };
-    void setS(unsigned char s) { this->s = s; calcRGB(); };
-    void setV(unsigned char v) { this->v = v; calcRGB(); };
+    void setH(unsigned char h) { this->HSV.h = h; calcRGB(); };
+    void setS(unsigned char s) { this->HSV.s = s; calcRGB(); };
+    void setV(unsigned char v) { this->HSV.v = v; calcRGB(); };
 
 
 private:
-    unsigned char r = 0;
-    unsigned char g = 0;
-    unsigned char b = 0;
-    unsigned char a = 0;
-
-    unsigned char h = 0;
-    unsigned char s = 0;
-    unsigned char v = 0;
+    rgb RGB;
+    hsv HSV;
 
     void calcHSV();
     void calcRGB();

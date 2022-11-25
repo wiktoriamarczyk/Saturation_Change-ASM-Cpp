@@ -1,9 +1,6 @@
 #include <iostream>
 #include "MainWindow.h"
 
-using namespace std;
-
-
 int RunQT(int argc, char** argv)
 {
     QApplication app(argc, argv);

@@ -1,85 +1,115 @@
 #include "Pixel.h"
 
+Pixel::Pixel(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+    this->RGB.r = r;
+    this->RGB.g = g;
+    this->RGB.b = b;
+    this->RGB.a = a;
+
+    calcHSV();
+}
+
+Pixel::Pixel(hsv inputHSV)
+{
+    this->HSV.h = inputHSV.h;
+    this->HSV.s = inputHSV.s;
+    this->HSV.v = inputHSV.v;
+    this->HSV.a = inputHSV.a;
+
+    calcRGB();
+}
 
 Pixel::operator rgb() 
 {
     rgb result;
-    result.r = this->r;
-    result.g = this->g;
-    result.b = this->b;
-    result.a = this->a;
+    result.r = this->RGB.r;
+    result.g = this->RGB.g;
+    result.b = this->RGB.b;
+    result.a = this->RGB.a;
+    return result;
+}
+
+Pixel::operator hsv()
+{
+    hsv result;
+    result.h = this->HSV.h;
+    result.s = this->HSV.s;
+    result.v = this->HSV.v;
+    result.a = this->HSV.a;
     return result;
 }
 
 void Pixel::calcHSV()
 {
     unsigned char rgbmin, rgbmax;
+    HSV.a = RGB.a;
     
-    rgbmin = r < g ? (r < b ? r : b) : (g < b ? g : b);
-    rgbmax = r > g ? (r > b ? r : b) : (g > b ? g : b);
+    rgbmin = RGB.r < RGB.g ? (RGB.r < RGB.b ? RGB.r : RGB.b) : (RGB.g < RGB.b ? RGB.g : RGB.b);
+    rgbmax = RGB.r > RGB.g ? (RGB.r > RGB.b ? RGB.r : RGB.b) : (RGB.g > RGB.b ? RGB.g : RGB.b);
     
-    v = rgbmax;
-    if (v == 0)
+    HSV.v = rgbmax;
+    if (HSV.v == 0)
     {
-        h = 0;
-        s = 0;
+        HSV.h = 0;
+        HSV.s = 0;
         return;
     }
     
-    s = 255 * long(rgbmax - rgbmin) / v;
-    if (s == 0)
+    HSV.s = 255 * long(rgbmax - rgbmin) / HSV.v;
+    if (HSV.s == 0)
     {
-        h = 0;
+        HSV.h = 0;
         return;
     }
     
-    if (rgbmax == r)
-        h = 0 + 43 * (g - b) / (rgbmax - rgbmin);
-    else if (rgbmax == g)
-        h = 85 + 43 * (b - r) / (rgbmax - rgbmin);
+    if (rgbmax == RGB.r)
+        HSV.h = 0 + 43 * (RGB.g - RGB.b) / (rgbmax - rgbmin);
+    else if (rgbmax == RGB.g)
+        HSV.h = 85 + 43 * (RGB.b - RGB.r) / (rgbmax - rgbmin);
     else
-        h = 171 + 43 * (r - g) / (rgbmax - rgbmin);
+        HSV.h = 171 + 43 * (RGB.r - RGB.g) / (rgbmax - rgbmin);
 }
 
 void Pixel::calcRGB()
 {
     unsigned char region, remainder, p, q, t;
+    RGB.a = HSV.a;
 
-    if (s == 0)
+    if (HSV.s == 0)
     {
-        r = v;
-        g = v;
-        b = v;
-        a = a;
+        RGB.r = HSV.v;
+        RGB.g = HSV.v;
+        RGB.b = HSV.v;
         return;
     }
 
-    region = h / 43;
-    remainder = (h - (region * 43)) * 6;
+    region = HSV.h / 43;
+    remainder = (HSV.h - (region * 43)) * 6;
 
-    p = (v * (255 - s)) >> 8;
-    q = (v * (255 - ((s * remainder) >> 8))) >> 8;
-    t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
+    p = (HSV.v * (255 - HSV.s)) >> 8;
+    q = (HSV.v * (255 - ((HSV.s * remainder) >> 8))) >> 8;
+    t = (HSV.v * (255 - ((HSV.s * (255 - remainder)) >> 8))) >> 8;
 
     switch (region)
     {
     case 0:
-        r = v; g = t; b = p;
+        RGB.r = HSV.v; RGB.g = t; RGB.b = p;
         break;
     case 1:
-        r = q; g = v; b = p;
+        RGB.r = q; RGB.g = HSV.v; RGB.b = p;
         break;
     case 2:
-        r = p; g = v; b = t;
+        RGB.r = p; RGB.g = HSV.v; RGB.b = t;
         break;
     case 3:
-        r = p; g = q; b = v;
+        RGB.r = p; RGB.g = q; RGB.b = HSV.v;
         break;
     case 4:
-        r = t; g = p; b = v;
+        RGB.r = t; RGB.g = p; RGB.b = HSV.v;
         break;
     default:
-        r = v; g = p; b = q;
+        RGB.r = HSV.v; RGB.g = p; RGB.b = q;
         break;
     }
 }

@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "Pixel.h"
+#include "ScopeExit.h"
 
 #include <QMessageBox>
 #include <iostream>
@@ -18,15 +19,14 @@ MainWindow::MainWindow()
 {
     this->setupUi(this);
 
-    connect(runButton, &QPushButton::pressed , [this]{ runButtonPressed(); } );
+    //connect(saturationSlider, &QSlider::valueChanged, [this] {satSliderChanged(); });
     connect(runButton, &QPushButton::pressed, this, &MainWindow::runButtonPressed);
-    connect(saturationSlider, &QSlider::valueChanged, [this] {satSliderChanged(); });
+    connect(saturationSlider, &QSlider::valueChanged, this, &MainWindow::satSliderChanged);
 }
 
 void MainWindow::satSliderChanged()
 {
-    string sliderValue = to_string(saturationSlider->value());
-    satLvlLabel->setText(QString::fromStdString(sliderValue));
+    satLvlLabel->setText(QString::number(saturationSlider->value()));
 }
 
 void MainWindow::runButtonPressed()
@@ -39,11 +39,18 @@ void MainWindow::runButtonPressed()
     originalPicture->setScene(scene);
     scene->addItem(item);
     originalPicture->show();
-
+    // image dimensions
     int width = 0;
     int height = 0;
-    // load the image 
+    // load the image
     stbi_uc* pImage = stbi_load("goldie.png", &width, &height, nullptr, 4);
+
+    SCOPE_EXIT
+    {
+        stbi_image_free(pImage);
+        pImage = 0;
+    };
+
     // create an array of simple 4 BYTE pixel objects
     vector<rgb> pixels4B;
     // resize the array with the number of pixels from the loaded image
@@ -71,7 +78,7 @@ void MainWindow::runButtonPressed()
     {
         for (int i = 0; i < pixelsCopy.size(); ++i)
         {
-            // colorFactor = 0 - no color at all, gray scale pixel; colorFactor = 1 - max saturation 
+            // colorFactor = 0 - no color at all, gray scale pixel; colorFactor = 1 - max saturation
             float colorFactor = (float)pixelsCopy[i].getS() / 255.0;
             // max saturation value is 255
             pixelsCopy[i].setS(pixelsCopy[i].getS() + (255 - pixelsCopy[i].getS()) * satLvl * colorFactor);
@@ -86,7 +93,7 @@ void MainWindow::runButtonPressed()
             pixelsCopy[i].setS(pixelsCopy[i].getS() + pixelsCopy[i].getS() * satLvl);
         }
     }
-    
+
     pixels4B.clear();
     // copy all modified pixels to the array containing simple 4 BYTE pixels
     std::copy(pixelsCopy.begin(), pixelsCopy.end(), std::back_inserter(pixels4B));
@@ -103,7 +110,4 @@ void MainWindow::runButtonPressed()
     resultPicture->setScene(scene);
     scene->addItem(item);
     resultPicture->show();
-
-    stbi_image_free(pImage);
-    pImage = 0;
 }

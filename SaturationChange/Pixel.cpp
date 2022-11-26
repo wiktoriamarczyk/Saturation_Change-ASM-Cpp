@@ -1,6 +1,6 @@
 #include "Pixel.h"
 
-Pixel::Pixel(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
     this->RGB.r = r;
     this->RGB.g = g;
@@ -42,7 +42,7 @@ Pixel::operator hsv()
 
 void Pixel::calcHSV()
 {
-    unsigned char rgbmin, rgbmax;
+    uint8_t rgbmin, rgbmax;
     HSV.a = RGB.a;
     
     rgbmin = RGB.r < RGB.g ? (RGB.r < RGB.b ? RGB.r : RGB.b) : (RGB.g < RGB.b ? RGB.g : RGB.b);
@@ -73,7 +73,7 @@ void Pixel::calcHSV()
 
 void Pixel::calcRGB()
 {
-    unsigned char region, remainder, p, q, t;
+    uint8_t region, remainder, p, q, t;
     RGB.a = HSV.a;
 
     if (HSV.s == 0)

@@ -21,6 +21,7 @@ SET(APP_SRC_FILES_LIST
     SaturationChange/MainWindow.cpp
 	SaturationChange/Pixel.h
 	SaturationChange/Pixel.cpp
+	SaturationChange/ScopeExit.h
 )
 
 #*****************************************************

@@ -3,47 +3,47 @@
 
 struct rgb
 {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
-    unsigned char a;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
 };
 
 struct hsv
 {
-    unsigned char h;
-    unsigned char s;
-    unsigned char v;
-    unsigned char a;
+    uint8_t h;
+    uint8_t s;
+    uint8_t v;
+    uint8_t a;
 };
 
 class Pixel
 {
 public:
-    Pixel(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
     Pixel(rgb inputRGB) : Pixel(inputRGB.r, inputRGB.g, inputRGB.b, inputRGB.a) {};
     Pixel(hsv inputHSV);
 
     operator rgb();
     operator hsv();
 
-    unsigned char getR() { return RGB.r; };
-    unsigned char getG() { return RGB.g; };
-    unsigned char getB() { return RGB.b; };
-    unsigned char getA() { return RGB.a; };
+    uint8_t getR() { return RGB.r; };
+    uint8_t getG() { return RGB.g; };
+    uint8_t getB() { return RGB.b; };
+    uint8_t getA() { return RGB.a; };
 
-    unsigned char getH() { return HSV.h; };
-    unsigned char getS() { return HSV.s; };
-    unsigned char getV() { return HSV.v; };
+    uint8_t getH() { return HSV.h; };
+    uint8_t getS() { return HSV.s; };
+    uint8_t getV() { return HSV.v; };
 
-    void setR(unsigned char r) { this->RGB.r = r; calcHSV();       };
-    void setG(unsigned char g) { this->RGB.g = g; calcHSV();       };
-    void setB(unsigned char b) { this->RGB.b = b; calcHSV();       };
-    void setA(unsigned char a) { this->RGB.a = a; this->HSV.a = a; };
+    void setR(uint8_t r) { this->RGB.r = r; calcHSV();       };
+    void setG(uint8_t g) { this->RGB.g = g; calcHSV();       };
+    void setB(uint8_t b) { this->RGB.b = b; calcHSV();       };
+    void setA(uint8_t a) { this->RGB.a = a; this->HSV.a = a; };
 
-    void setH(unsigned char h) { this->HSV.h = h; calcRGB(); };
-    void setS(unsigned char s) { this->HSV.s = s; calcRGB(); };
-    void setV(unsigned char v) { this->HSV.v = v; calcRGB(); };
+    void setH(uint8_t h) { this->HSV.h = h; calcRGB(); };
+    void setS(uint8_t s) { this->HSV.s = s; calcRGB(); };
+    void setV(uint8_t v) { this->HSV.v = v; calcRGB(); };
 
 
 private:

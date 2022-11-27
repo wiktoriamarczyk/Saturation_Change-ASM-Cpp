@@ -4,6 +4,8 @@
 
 int RunQT(int argc, char** argv)
 {
+    std::filesystem::current_path(R"(C:/Users/wikto/source/repos/Mój Git - C++/SaturationChange/build/App/Debug)");
+
     QApplication app(argc, argv);
 
     MainWindow Wnd;
@@ -12,19 +14,6 @@ int RunQT(int argc, char** argv)
 
     return app.exec();
 }
-
-
-struct TestObject
-{
-    TestObject()
-    {
-        printf("Jestem :D\n");
-    }
-    ~TestObject()
-    {
-        printf("Rodzicow nie ma w domu :)\n");
-    }
-};
 
 int main()
 {

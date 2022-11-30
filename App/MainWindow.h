@@ -16,6 +16,7 @@ private slots:
     void loadButtonPressed();
     void satSliderChanged();
     bool isFileValid(QString inputFilePath);
+    void displayImage(QGraphicsView *view, string fileName);
 private:
     QString filePath;
     string  fileName;
@@ -24,3 +25,4 @@ private:
 };
 
 string getFileNameFromThePath(std::filesystem::path inputFilePath);
+string getPrecisedValueAsStr(float value, int precision);

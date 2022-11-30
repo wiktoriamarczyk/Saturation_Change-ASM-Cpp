@@ -1,7 +1,6 @@
 #include "MainWindow.h"
 #include "Pixel.h"
 #include "ScopeExit.h"
-//#include "../LibCpp/saturationChangeCpp.h"
 
 #include <QMessageBox>
 #include <iostream>
@@ -9,6 +8,7 @@
 #include <string>
 #include <chrono>
 #include<filesystem>
+#include<cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -31,7 +31,7 @@ MainWindow::MainWindow()
 
 void MainWindow::satSliderChanged()
 {
-    satLvlLabel->setText(QString::number(saturationSlider->value()));
+    satLvlLabel->setText(QString::number(saturationSlider->value()) + "%");
 }
 
 void MainWindow::loadButtonPressed()
@@ -54,11 +54,7 @@ void MainWindow::loadButtonPressed()
     isImageLoaded = true;
 
     // display loaded image
-    QGraphicsScene* scene = new QGraphicsScene();
-    QGraphicsPixmapItem* item = new QGraphicsPixmapItem(QPixmap(QString::fromStdString(fileName)));
-    originalPicture->setScene(scene);
-    scene->addItem(item);
-    originalPicture->show();
+    displayImage(originalPicture, fileName);
 }
 
 bool MainWindow::isFileValid(QString inputFilePath)
@@ -151,20 +147,26 @@ void MainWindow::runButtonPressed()
     // create new image with modified pixels
     std::filesystem::path fileNameWithoutEx(fileName);
     fileNameWithoutEx.replace_extension();
-    string newFileName = fileNameWithoutEx.string() + "_modified_";
+    string newFileName = fileNameWithoutEx.string() + "_modified_" + getPrecisedValueAsStr(satLvl, 2) + ".png";
 
-    stbi_write_png((newFileName + to_string(satLvl) + ".png").c_str(), width, height, 4, pixels4B.data(), width * sizeof(rgb));
+    stbi_write_png((newFileName).c_str(), width, height, 4, pixels4B.data(), width * sizeof(rgb));
 
     // display result image
-    QGraphicsScene* scene = new QGraphicsScene();
-    QGraphicsPixmapItem* item = new QGraphicsPixmapItem(QPixmap((newFileName + to_string(satLvl) + ".png").c_str()));
-    resultPicture->setScene(scene);
-    scene->addItem(item);
-    resultPicture->show();
+    displayImage(resultPicture, newFileName);
 }
 
-float setPrecision(float number, int places)
+void MainWindow::displayImage(QGraphicsView *view, string inputFileName)
 {
-    float n = std::pow(10.0f, places);
-    return std::round(f * n) / n;
+    QGraphicsScene* scene = new QGraphicsScene();
+    QGraphicsPixmapItem* item = new QGraphicsPixmapItem(QPixmap(QString::fromStdString(inputFileName)));
+    view->setScene(scene);
+    scene->addItem(item);
+    view->show();
+}
+
+string getPrecisedValueAsStr(float value, int precision)
+{
+    string result = to_string(value);
+    result = result.substr(0, result.find(".") + precision + 1);
+    return result;
 }

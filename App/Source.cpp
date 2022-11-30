@@ -4,7 +4,7 @@
 
 int RunQT(int argc, char** argv)
 {
-    std::filesystem::current_path(R"(C:/Users/wikto/source/repos/Mój Git - C++/SaturationChange/build/App/Debug)");
+    std::filesystem::current_path(R"(C:/Users/wikto/source/repos/Git-C++/SaturationChange/build/App/Debug)");
 
     QApplication app(argc, argv);
 

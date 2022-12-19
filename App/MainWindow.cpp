@@ -15,10 +15,32 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-using namespace std;
+using std::vector;
+using std::to_string;
+using std::filesystem::path;
+using std::copy;
+using std::back_inserter;
+
+/*
+ Project:   The application responsible for changing the color saturation in images.
+            The program uses the stb_image library to load and save images and the Qt library to implement the user interface.
+
+ Algorithm: The algorithm is based on the HSV color model. For each pixel of the loaded image, the saturation is changed by adding to saturation parameter its value multiplied
+            by a given factor which is calculated based on the slider value representing the percentage of change. Slider value is then clamped to the range of 0 to 1
+            (for increasing the saturation) or to the range of -1 to 0 if a decrease in saturation was selected. The new pixel saturation value can be a maximum of 255 and a minimum of 0.
+            Modified pixels by the given saturation value are then converted to the RGB model and saved to a new image.
+
+ Author:     Wiktoria Marczyk
+ Version:    1.0
+
+ sem. 5, 2022/2023
+*/
 
 using TestFunctionType1 = void (_stdcall *) (Pixel*, int, float);
 
+/*
+ Main Window constructor in which components are assigned to functions.
+*/
 MainWindow::MainWindow()
 {
     this->setupUi(this);
@@ -29,10 +51,17 @@ MainWindow::MainWindow()
     connect(saturationSlider, &QSlider::valueChanged, this, &MainWindow::satSliderChanged);
 }
 
+/*
+ Changes the label text to the current value of the saturation slider.
+*/
 void MainWindow::satSliderChanged()
 {
     satLvlLabel->setText(QString::number(saturationSlider->value()) + "%");
 }
+
+/*
+ Loads the image from the given path and displays it on the screen. Function triggered by pressing the load button.
+*/
 
 void MainWindow::loadButtonPressed()
 {
@@ -50,13 +79,19 @@ void MainWindow::loadButtonPressed()
     // set the file path
     filePath      = tmpfilePath;
     // set the file name
-    fileName      = getFileNameFromThePath(std::filesystem::path(filePath.toStdString()));
+    fileName      = getFileNameFromThePath(path(filePath.toStdString()));
     isImageLoaded = true;
 
     // display loaded image
     displayImage(originalPicture, fileName);
 }
 
+/*
+ Checks if the file is valid (has proper extension .png/.jpg/.bmp). If not a message box is displayed.
+
+ @param inputFilePath - path to the file
+ @return true if the file is valid, false otherwise
+*/
 bool MainWindow::isFileValid(QString inputFilePath)
 {
     // check if the file exists
@@ -65,8 +100,8 @@ bool MainWindow::isFileValid(QString inputFilePath)
         return false;
     }
 
-    string tmpFileName = getFileNameFromThePath(std::filesystem::path(inputFilePath.toStdString()));
-    std::filesystem::path fsFileName = tmpFileName;
+    string tmpFileName = getFileNameFromThePath(path(inputFilePath.toStdString()));
+    path fsFileName = tmpFileName;
 
     // check if the file has proper extension
     if (fsFileName.extension() != ".png" && fsFileName.extension() != ".jpg" && fsFileName.extension() != ".bmp")
@@ -78,13 +113,22 @@ bool MainWindow::isFileValid(QString inputFilePath)
     return true;
 }
 
-string getFileNameFromThePath(std::filesystem::path inputFilePath)
+/*
+ Returns the file name from the given path.
+
+ @param inputFilePath - path to the file
+ @return file name as a string
+*/
+string getFileNameFromThePath(path inputFilePath)
 {
     string result = inputFilePath.string();
     result = result.substr(result.find_last_of("/\\") + 1);
     return result;
 }
 
+/*
+ Execute the algorithm from loaded dll and save its result - the modified image. Function triggered by pressing the run button.
+*/
 void MainWindow::runButtonPressed()
 {
     // if image is not loaded, return
@@ -116,7 +160,7 @@ void MainWindow::runButtonPressed()
     // create an array of complex pixel objects
     vector<Pixel> pixels;
     // copy the 4 BYTE pixel data from the array to the new array
-    std::copy(pixels4B.begin(), pixels4B.end(), std::back_inserter(pixels));
+    copy(pixels4B.begin(), pixels4B.end(), back_inserter(pixels));
 
     // make a copy of the pixels array where the modified pixels will be stored
     vector<Pixel> modifiedPixels;
@@ -142,10 +186,10 @@ void MainWindow::runButtonPressed()
 
     // copy all modified pixels to the array containing simple 4 BYTE pixels
     pixels4B.clear();
-    std::copy(modifiedPixels.begin(), modifiedPixels.end(), std::back_inserter(pixels4B));
+    copy(modifiedPixels.begin(), modifiedPixels.end(), back_inserter(pixels4B));
 
     // create new image with modified pixels
-    std::filesystem::path fileNameWithoutEx(fileName);
+    path fileNameWithoutEx(fileName);
     fileNameWithoutEx.replace_extension();
     string newFileName = fileNameWithoutEx.string() + "_modified_" + getPrecisedValueAsStr(satLvl, 2) + ".png";
 
@@ -155,15 +199,33 @@ void MainWindow::runButtonPressed()
     displayImage(resultPicture, newFileName);
 }
 
+/*
+ Displays the image on the screen.
+
+ @param view - pointer to the QGraphicsView - a widget for displaying the contents of a QGraphicsScene
+ @param inputFileName - name of the file to be displayed
+*/
 void MainWindow::displayImage(QGraphicsView *view, string inputFileName)
 {
+    // create a scene which provides a surface for managing 2D graphical items to display the image
     QGraphicsScene* scene = new QGraphicsScene();
+    // create a pixmap from the image file
     QGraphicsPixmapItem* item = new QGraphicsPixmapItem(QPixmap(QString::fromStdString(inputFileName)));
+    // pass the address of the scene to visualize
     view->setScene(scene);
+    // add the pixmap to the scene
     scene->addItem(item);
+    // display items on the scene (image)
     view->show();
 }
 
+/*
+ Sets a precision to the float value.
+
+ @param value - value to be modified
+ @param precision - number of digits after the decimal point
+ @return value with the given precision
+*/
 string getPrecisedValueAsStr(float value, int precision)
 {
     string result = to_string(value);

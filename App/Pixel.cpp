@@ -20,7 +20,7 @@ Pixel::Pixel(hsv inputHSV)
     calcRGB();
 }
 
-Pixel::operator rgb() 
+Pixel::operator rgb()
 {
     rgb result;
     result.r = this->RGB.r;
@@ -44,10 +44,10 @@ void Pixel::calcHSV()
 {
     uint8_t rgbmin, rgbmax;
     HSV.a = RGB.a;
-    
+
     rgbmin = RGB.r < RGB.g ? (RGB.r < RGB.b ? RGB.r : RGB.b) : (RGB.g < RGB.b ? RGB.g : RGB.b);
     rgbmax = RGB.r > RGB.g ? (RGB.r > RGB.b ? RGB.r : RGB.b) : (RGB.g > RGB.b ? RGB.g : RGB.b);
-    
+
     HSV.v = rgbmax;
     if (HSV.v == 0)
     {
@@ -55,14 +55,14 @@ void Pixel::calcHSV()
         HSV.s = 0;
         return;
     }
-    
+
     HSV.s = 255 * long(rgbmax - rgbmin) / HSV.v;
     if (HSV.s == 0)
     {
         HSV.h = 0;
         return;
     }
-    
+
     if (rgbmax == RGB.r)
         HSV.h = 0 + 43 * (RGB.g - RGB.b) / (rgbmax - rgbmin);
     else if (rgbmax == RGB.g)

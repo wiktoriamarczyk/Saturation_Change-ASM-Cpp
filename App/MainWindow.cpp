@@ -36,7 +36,7 @@ using std::back_inserter;
  sem. 5, 2022/2023
 */
 
-using TestFunctionType1 = void (_stdcall *) (Pixel*, int, float);
+using TestFunctionType1 = void (_stdcall *) (hsv*, int, float);
 
 /*
  Main Window constructor in which components are assigned to functions.
@@ -62,7 +62,6 @@ void MainWindow::satSliderChanged()
 /*
  Loads the image from the given path and displays it on the screen. Function triggered by pressing the load button.
 */
-
 void MainWindow::loadButtonPressed()
 {
     // choose file
@@ -151,21 +150,20 @@ void MainWindow::runButtonPressed()
     };
 
     // create an array of simple 4 BYTE pixel objects
-    vector<rgb> pixels4B;
+    vector<rgb> pixelsRGB;
     // resize the array with the number of pixels from the loaded image
-    pixels4B.resize(width * height);
-    // copy all 4 BYTE pixel data from the loaded image to the array
-    memcpy(pixels4B.data(), pImage, pixels4B.size() * sizeof(rgb));
 
-    // create an array of complex pixel objects
-    vector<Pixel> pixels;
-    // copy the 4 BYTE pixel data from the array to the new array
-    copy(pixels4B.begin(), pixels4B.end(), back_inserter(pixels));
+    const auto dataSize         = width * height;
+    const auto dataBufferSize   = ((dataSize + 3) / 4) * 4;
+
+    pixelsRGB.resize(dataBufferSize, rgb{0,0,0,0});
+    // copy all 4 BYTE pixel data from the loaded image to the array
+    memcpy(pixelsRGB.data(), pImage, dataSize * sizeof(rgb));
 
     // make a copy of the pixels array where the modified pixels will be stored
-    vector<Pixel> modifiedPixels;
-    modifiedPixels.reserve(pixels.size());
-    modifiedPixels = pixels;
+    vector<hsv> pixelsHSV;
+    // copy the 4 BYTE pixel data from the array to the new array
+    copy(pixelsRGB.begin(), pixelsRGB.end(), back_inserter(pixelsHSV));
 
     // for increasing the saturation: value between 0 and 1
     // for decreasing the saturation: value between -1 and 0
@@ -175,25 +173,28 @@ void MainWindow::runButtonPressed()
     if (cppRadioButton->isChecked())
     {
         if (auto pFunctionRawPtr = reinterpret_cast<TestFunctionType1>(QLibrary("./LibCpp.dll").resolve("changeSaturation")))
-            pFunctionRawPtr(modifiedPixels.data(), modifiedPixels.size(), satLvl);
+            pFunctionRawPtr(pixelsHSV.data(), pixelsHSV.size(), satLvl);
         else
             QMessageBox::information(nullptr, QStringLiteral("Hello Message"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
     }
     else if (asmRadioButton->isChecked())
     {
-        /* call asm function */
+        if (auto pFunctionRawPtr = reinterpret_cast<TestFunctionType1>(QLibrary("./LibASM.dll").resolve("changeSaturation")))
+            pFunctionRawPtr(pixelsHSV.data(), pixelsHSV.size(), satLvl);
+        else
+            QMessageBox::information(nullptr, QStringLiteral("Hello Message"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
     }
 
     // copy all modified pixels to the array containing simple 4 BYTE pixels
-    pixels4B.clear();
-    copy(modifiedPixels.begin(), modifiedPixels.end(), back_inserter(pixels4B));
+    pixelsRGB.clear();
+    copy(pixelsHSV.begin(), pixelsHSV.end(), back_inserter(pixelsRGB));
 
     // create new image with modified pixels
     path fileNameWithoutEx(fileName);
     fileNameWithoutEx.replace_extension();
     string newFileName = fileNameWithoutEx.string() + "_modified_" + getPrecisedValueAsStr(satLvl, 2) + ".png";
 
-    stbi_write_png((newFileName).c_str(), width, height, 4, pixels4B.data(), width * sizeof(rgb));
+    stbi_write_png((newFileName).c_str(), width, height, 4, pixelsRGB.data(), width * sizeof(rgb));
 
     // display result image
     displayImage(resultPicture, newFileName);

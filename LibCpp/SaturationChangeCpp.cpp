@@ -36,7 +36,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
  @param bufferSize - size of the pixels array
  @param saturationLvl - saturation value to be applied to the pixels: (-1;0) for decreasing the saturation, (0;1) for increasing the saturation
 */
-void changeSaturation(Pixel* pixelsBuffer, int bufferSize, float saturationLvl)
+void changeSaturation(hsv* pixelsBuffer, int bufferSize, float saturationLvl)
 {
     // increasing the saturation
     if (saturationLvl > 0)
@@ -47,9 +47,9 @@ void changeSaturation(Pixel* pixelsBuffer, int bufferSize, float saturationLvl)
             // and saturating those would result in artifacts
             // colorFactor = 0 - no color at all - gray scale pixel;
             // colorFactor = 1 - max saturation
-            float colorFactor = (float)pixelsBuffer[i].getS() / 255.0;
+            float colorFactor = (float)pixelsBuffer[i].s / 255.0;
             // max saturation value is 255
-            pixelsBuffer[i].setS(pixelsBuffer[i].getS() + (255 - pixelsBuffer[i].getS()) * saturationLvl * colorFactor);
+            pixelsBuffer[i].s = pixelsBuffer[i].s + (255 - pixelsBuffer[i].s) * saturationLvl * colorFactor;
         }
     }
     // decreasing the saturation
@@ -58,7 +58,7 @@ void changeSaturation(Pixel* pixelsBuffer, int bufferSize, float saturationLvl)
         for (int i = 0; i < bufferSize; ++i)
         {
             // min saturation value is 0
-            pixelsBuffer[i].setS(pixelsBuffer[i].getS() + pixelsBuffer[i].getS() * saturationLvl);
+            pixelsBuffer[i].s = pixelsBuffer[i].s + pixelsBuffer[i].s * saturationLvl;
         }
     }
 }

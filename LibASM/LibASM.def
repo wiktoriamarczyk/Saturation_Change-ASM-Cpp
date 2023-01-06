@@ -1,2 +1,2 @@
 LIBRARY LibASM
-EXPORTS TestASM
+EXPORTS changeSaturation

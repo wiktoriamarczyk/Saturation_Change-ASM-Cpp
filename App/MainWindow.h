@@ -15,14 +15,15 @@ private slots:
     void runButtonPressed();
     void loadButtonPressed();
     void satSliderChanged();
+    void threadsNumberChanged();
     bool isFileValid(QString inputFilePath);
     void displayImage(QGraphicsView *view, string fileName);
 private:
     QString filePath;
     string  fileName;
     bool    isImageLoaded = false;
-    int     channels;
 };
 
-string getFileNameFromThePath(std::filesystem::path inputFilePath);
-string getPrecisedValueAsStr(float value, int precision);
+string getFileNameFromPath(std::filesystem::path inputFilePath);
+string getPrecisedValue(float value, int precision);
+int roundUpTo(int value, int multiple);

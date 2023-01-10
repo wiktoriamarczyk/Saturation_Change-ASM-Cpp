@@ -9,6 +9,7 @@
 #include <chrono>
 #include<filesystem>
 #include<cmath>
+#include<thread>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -49,6 +50,15 @@ MainWindow::MainWindow()
     connect(runButton, &QPushButton::pressed, this, &MainWindow::runButtonPressed);
     connect(loadButton, &QPushButton::pressed, this, &MainWindow::loadButtonPressed);
     connect(saturationSlider, &QSlider::valueChanged, this, &MainWindow::satSliderChanged);
+    connect(threadsSlider, &QSlider::valueChanged, this, &MainWindow::threadsNumberChanged);
+}
+
+/*
+ Changes the label text to the current value of the threads number slider.
+*/
+void MainWindow::threadsNumberChanged()
+{
+    threadsNumLabel->setText(QString::number(threadsSlider->value()));
 }
 
 /*
@@ -78,7 +88,7 @@ void MainWindow::loadButtonPressed()
     // set the file path
     filePath      = tmpfilePath;
     // set the file name
-    fileName      = getFileNameFromThePath(path(filePath.toStdString()));
+    fileName      = getFileNameFromPath(path(filePath.toStdString()));
     isImageLoaded = true;
 
     // display loaded image
@@ -86,7 +96,7 @@ void MainWindow::loadButtonPressed()
 }
 
 /*
- Checks if the file is valid (has proper extension .png/.jpg/.bmp). If not a message box is displayed.
+ Checks if the file is valid (has proper extension .png/.jpg/.bmp). If not, a message box is displayed.
 
  @param inputFilePath - path to the file
  @return true if the file is valid, false otherwise
@@ -99,7 +109,7 @@ bool MainWindow::isFileValid(QString inputFilePath)
         return false;
     }
 
-    string tmpFileName = getFileNameFromThePath(path(inputFilePath.toStdString()));
+    string tmpFileName = getFileNameFromPath(path(inputFilePath.toStdString()));
     path fsFileName = tmpFileName;
 
     // check if the file has proper extension
@@ -113,23 +123,12 @@ bool MainWindow::isFileValid(QString inputFilePath)
 }
 
 /*
- Returns the file name from the given path.
-
- @param inputFilePath - path to the file
- @return file name as a string
-*/
-string getFileNameFromThePath(path inputFilePath)
-{
-    string result = inputFilePath.string();
-    result = result.substr(result.find_last_of("/\\") + 1);
-    return result;
-}
-
-/*
  Execute the algorithm from loaded dll and save its result - the modified image. Function triggered by pressing the run button.
 */
 void MainWindow::runButtonPressed()
 {
+    // ---------- IMAGE LOAD ----------
+
     // if image is not loaded, return
     if (!isImageLoaded && filePath.isEmpty())
     {
@@ -149,14 +148,17 @@ void MainWindow::runButtonPressed()
         pImage = 0;
     };
 
+
+    // ---------- VARIABLES CREATION ----------
+
     // create an array of simple 4 BYTE pixel objects
     vector<rgb> pixelsRGB;
     // resize the array with the number of pixels from the loaded image
-
     const auto dataSize         = width * height;
-    const auto dataBufferSize   = ((dataSize + 3) / 4) * 4;
-
+    // assuring that the buffer size is a multiplication of: number of pixels processed simultaneously in ASM * number of threads
+    const auto dataBufferSize   = roundUpTo((int)dataSize, 4 * threadsSlider->value());
     pixelsRGB.resize(dataBufferSize, rgb{0,0,0,0});
+
     // copy all 4 BYTE pixel data from the loaded image to the array
     memcpy(pixelsRGB.data(), pImage, dataSize * sizeof(rgb));
 
@@ -169,31 +171,92 @@ void MainWindow::runButtonPressed()
     // for decreasing the saturation: value between -1 and 0
     float satLvl = saturationSlider->value() / 100.f;
 
-    // call cpp or asm function to change the saturation
+
+    // ---------- DLL SELECTECTION ----------
+
+    TestFunctionType1 selectedFunction = nullptr;
+    bool isCppChosen = true;
+
+    // select cpp or asm function to change the saturation
     if (cppRadioButton->isChecked())
     {
         if (auto pFunctionRawPtr = reinterpret_cast<TestFunctionType1>(QLibrary("./LibCpp.dll").resolve("changeSaturation")))
-            pFunctionRawPtr(pixelsHSV.data(), pixelsHSV.size(), satLvl);
+            selectedFunction = pFunctionRawPtr;
         else
-            QMessageBox::information(nullptr, QStringLiteral("Hello Message"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
+            QMessageBox::information(nullptr, QStringLiteral("Error"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
     }
     else if (asmRadioButton->isChecked())
     {
         if (auto pFunctionRawPtr = reinterpret_cast<TestFunctionType1>(QLibrary("./LibASM.dll").resolve("changeSaturation")))
-            pFunctionRawPtr(pixelsHSV.data(), pixelsHSV.size(), satLvl);
+            selectedFunction = pFunctionRawPtr;
         else
-            QMessageBox::information(nullptr, QStringLiteral("Hello Message"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
+            QMessageBox::information(nullptr, QStringLiteral("Error"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
+
+        isCppChosen = false;
     }
 
-    // copy all modified pixels to the array containing simple 4 BYTE pixels
+    // if dll is not loaded, abort operation
+    if (!selectedFunction)
+        return;
+
+
+    // ---------- THREADS CREATION ----------
+
+    // create requested number of threads and run the algorithm
+    vector<std::thread> threads;
+
+    std::atomic_bool Go = false;
+
+    auto threadFunction = [&](hsv* pixelBuffer, int bufferSize)
+    {
+        while (!Go)
+        {}
+        selectedFunction(pixelBuffer, bufferSize, satLvl);
+    };
+
+    const int pixelsCountPerThread = pixelsHSV.size() / threadsSlider->value();
+    const int roundedPixelsCountPerThread = roundUpTo(pixelsCountPerThread, 4);
+
+    for (int i = 0; i < threadsSlider->value(); i++)
+    {
+        // calculate buffer start for each thread
+        hsv* threadBufferStart = pixelsHSV.data() + i * roundedPixelsCountPerThread;
+        // create a new thread
+        threads.push_back(std::thread(threadFunction, threadBufferStart, roundedPixelsCountPerThread));
+    }
+
+
+    // ---------- TIME MEASUREMENT ----------
+
+    auto start = std::chrono::high_resolution_clock::now();
+    Go = true;
+
+    for (int i = 0; i < threadsSlider->value(); i++)
+    {
+        threads[i].join();
+    }
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = (finish - start) * 1000;
+
+    if (isCppChosen)
+        cppTimeLabel->setText( (getPrecisedValue(elapsed.count(), 2) + " ms").c_str() );
+    else
+        asmTimeLabel->setText( (getPrecisedValue(elapsed.count(), 2) + " ms").c_str() );
+
+
+    // ---------- IMAGE SAVE ----------
+
+    // copy all modified pixels to the array containing simple 4 BYTE pixels in RGB
     pixelsRGB.clear();
     copy(pixelsHSV.begin(), pixelsHSV.end(), back_inserter(pixelsRGB));
 
     // create new image with modified pixels
     path fileNameWithoutEx(fileName);
     fileNameWithoutEx.replace_extension();
-    string newFileName = fileNameWithoutEx.string() + "_modified_" + getPrecisedValueAsStr(satLvl, 2) + ".png";
+    string newFileName = fileNameWithoutEx.string() + "_modified_" + getPrecisedValue(satLvl, 2) + ".png";
 
+    // save the image
     stbi_write_png((newFileName).c_str(), width, height, 4, pixelsRGB.data(), width * sizeof(rgb));
 
     // display result image
@@ -221,15 +284,40 @@ void MainWindow::displayImage(QGraphicsView *view, string inputFileName)
 }
 
 /*
+ Returns the file name from the given path.
+
+ @param inputFilePath - path to the file
+ @return file name as a string
+*/
+string getFileNameFromPath(path inputFilePath)
+{
+    string result = inputFilePath.string();
+    result = result.substr(result.find_last_of("/\\") + 1);
+    return result;
+}
+
+/*
  Sets a precision to the float value.
 
  @param value - value to be modified
  @param precision - number of digits after the decimal point
- @return value with the given precision
+ @return value with the given precision as string
 */
-string getPrecisedValueAsStr(float value, int precision)
+string getPrecisedValue(float value, int precision)
 {
     string result = to_string(value);
     result = result.substr(0, result.find(".") + precision + 1);
     return result;
+}
+
+/*
+ Rounds a number to the nearest multiple of a given integer.
+
+ @param value - value to be rounded
+ @paaram multiple - number to which the value will be rounded
+ @return rounded number
+*/
+int roundUpTo(int value, int multiple)
+{
+    return ((value + multiple - 1) / multiple) * multiple;
 }

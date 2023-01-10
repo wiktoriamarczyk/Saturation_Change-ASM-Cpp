@@ -1,16 +1,32 @@
+; Project:   The application responsible for changing the color saturation in images.
+;            The program uses the stb_image library to load and save images and the Qt library to implement the user interface.;
+;
+; Algorithm: The algorithm is based on the HSV color model. For each pixel of the loaded image, the saturation is changed by adding to saturation parameter its value multiplied
+;            by a given factor which is calculated based on the slider value representing the percentage of change. Slider value is then clamped to the range of 0 to 1
+;            (for increasing the saturation) or to the range of -1 to 0 if a decrease in saturation was selected. The new pixel saturation value can be a maximum of 255 and a minimum of 0.
+;            Modified pixels by the given saturation value are then converted to the RGB model and saved to a new image.
+;
+; Author:     Wiktoria Marczyk
+; Version:    1.0
+;
+; sem. 5, 2022/2023
+
+
 .code
 
 ;void changeSaturation(hsv * pixelsBuffer, int bufferSize, float saturationLvl);
 ; x64 calling convention
 ; arg 0 - RCX  - pointer to HSV buffer
 ; arg 1 - RDX  - buffer size
-; arg 2 - xmm2 - saturation level as float
+; arg 2 - xmm2 - saturation level as float: (-1;0) for desaturation and (0;1) for saturation
 
 const_divisor dd 255.0
 
 changeSaturation proc
 
 pxor xmm0, xmm0                     ; xmm0 = 0
+comiss xmm2, xmm0                   ; check if saturation level is 0
+jz end_procedure                    ; if saturation level is 0, return
 comiss xmm2, xmm0                   ; check if saturation level is negative
 jb loop_desaturation                ; if saturation level is negative, desaturate
 
@@ -23,7 +39,7 @@ shl rax, 32                         ; s << 32
 mov al, byte ptr  [rcx+5]           ; get saturation value 2
 movq mm0, rax                       ; mmx0 = s
 CVTPI2PS xmm7, mm0                  ; convert to float
-movlhps xmm7, xmm7                  ; shift values from low  qword to high qword
+movlhps xmm7, xmm7                  ; shift values from low qword to high qword
 
 mov al, byte ptr  [rcx+9]           ; get saturation value 3
 shl rax, 32                         ; s << 32
@@ -72,7 +88,7 @@ shl rax, 32                         ; s << 32
 mov al, byte ptr  [rcx+5]           ; get saturation value 2
 movq mm0, rax                       ; mmx0 = s
 CVTPI2PS xmm7, mm0                  ; convert to float
-movlhps xmm7, xmm7                  ; shift values from low  qword to high qword
+movlhps xmm7, xmm7                  ; shift values from low qword to high qword
 
 mov al, byte ptr  [rcx+9]           ; get saturation value 3
 shl rax, 32                         ; s << 32
@@ -103,9 +119,12 @@ add rcx, 16                         ; increment pointer - we processed 4 pixels 
 sub rdx, 4                          ; decrement buffer size
 jnz loop_desaturation               ; jump to LOOP if buffer size is not 0
 
+
+end_procedure:
+
 ret                                 ; return
 
-changeSaturation endp
 
+changeSaturation endp
 
 end

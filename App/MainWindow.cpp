@@ -11,8 +11,10 @@
 #include<cmath>
 #include<thread>
 
+#define STBI_WINDOWS_UTF8
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STBIW_WINDOWS_UTF8
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -23,10 +25,10 @@ using std::copy;
 using std::back_inserter;
 
 /*
- Project:   The application responsible for changing the color saturation in images.
-            The program uses the stb_image library to load and save images and the Qt library to implement the user interface.
+ Project:   Application responsible for changing color saturation in images.
+            Program uses stb_image library to load and save images and Qt library to implement user interface.
 
- Algorithm: The algorithm is based on the HSV color model. For each pixel of the loaded image, the saturation is changed by adding to saturation parameter its value multiplied
+ Algorithm: Algorithm is based on the HSV color model. For each pixel of the loaded image, saturation is changed by adding to it its value multiplied
             by a given factor which is calculated based on the slider value representing the percentage of change. Slider value is then clamped to the range of 0 to 1
             (for increasing the saturation) or to the range of -1 to 0 if a decrease in saturation was selected. The new pixel saturation value can be a maximum of 255 and a minimum of 0.
             Modified pixels by the given saturation value are then converted to the RGB model and saved to a new image.
@@ -37,7 +39,9 @@ using std::back_inserter;
  sem. 5, 2022/2023
 */
 
-using TestFunctionType1 = void (_stdcall *) (hsv*, int, float);
+// declaration of function type that accepts following arguments: pointer to hsv structure, int and float
+// (*) - pointer to function
+using algorithmFunctionType = void (*) (hsv*, int, float);
 
 /*
  Main Window constructor in which components are assigned to functions.
@@ -88,7 +92,7 @@ void MainWindow::loadButtonPressed()
     // set the file path
     filePath      = tmpfilePath;
     // set the file name
-    fileName      = getFileNameFromPath(path(filePath.toStdString()));
+    fileName      = getFileNameFromPath(path(filePath.toUtf8().toStdString()));
     isImageLoaded = true;
 
     // display loaded image
@@ -119,6 +123,12 @@ bool MainWindow::isFileValid(QString inputFilePath)
         return false;
     }
 
+    if (!stbi_info(inputFilePath.toStdString().c_str(), nullptr, nullptr, nullptr))
+    {
+        QMessageBox::information(this, QStringLiteral("Error"), QString("Cannot load %1").arg(QString::fromStdString(tmpFileName)));
+        return false;
+    }
+
     return true;
 }
 
@@ -141,6 +151,11 @@ void MainWindow::runButtonPressed()
     int height = 0;
     // load the image
     stbi_uc* pImage = stbi_load(fileName.c_str(), &width, &height, nullptr, 4);
+
+    if (!pImage) {
+        QMessageBox::information(this, QStringLiteral("Error"), QString("Cannot load %1").arg(QString::fromStdString(fileName)));
+        return;
+    }
 
     SCOPE_EXIT
     {
@@ -174,26 +189,29 @@ void MainWindow::runButtonPressed()
 
     // ---------- DLL SELECTECTION ----------
 
-    TestFunctionType1 selectedFunction = nullptr;
+    algorithmFunctionType selectedFunction = nullptr;
     bool isCppChosen = true;
+    QLibrary loadedLibrary;
 
     // select cpp or asm function to change the saturation
     if (cppRadioButton->isChecked())
     {
-        if (auto pFunctionRawPtr = reinterpret_cast<TestFunctionType1>(QLibrary("./LibCpp.dll").resolve("changeSaturation")))
-            selectedFunction = pFunctionRawPtr;
-        else
-            QMessageBox::information(nullptr, QStringLiteral("Error"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
+        // select C++ library to load
+        loadedLibrary.setFileName("./LibCpp.dll");
     }
     else if (asmRadioButton->isChecked())
     {
-        if (auto pFunctionRawPtr = reinterpret_cast<TestFunctionType1>(QLibrary("./LibASM.dll").resolve("changeSaturation")))
-            selectedFunction = pFunctionRawPtr;
-        else
-            QMessageBox::information(nullptr, QStringLiteral("Error"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
-
+        // select ASM library to load
+        loadedLibrary.setFileName("./LibASM.dll");
         isCppChosen = false;
     }
+    // load selected library
+    loadedLibrary.load();
+    // obtain address to a function
+    if (auto pFunctionRawPtr = reinterpret_cast<algorithmFunctionType>(loadedLibrary.resolve("changeSaturation")))
+        selectedFunction = pFunctionRawPtr;
+    else
+        QMessageBox::information(nullptr, QStringLiteral("Error"), QStringLiteral("No Lib! :("), QMessageBox::Ok);
 
     // if dll is not loaded, abort operation
     if (!selectedFunction)

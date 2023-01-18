@@ -6,10 +6,10 @@
 #include "../App/Pixel.cpp"
 
 /*
- Project:   The application responsible for changing the color saturation in images.
-            The program uses the stb_image library to load and save images and the Qt library to implement the user interface.
+ Project:   Application responsible for changing color saturation in images.
+            Program uses stb_image library to load and save images and Qt library to implement user interface.
 
- Algorithm: The algorithm is based on the HSV color model. For each pixel of the loaded image, the saturation is changed by adding to saturation parameter its value multiplied
+ Algorithm: Algorithm is based on the HSV color model. For each pixel of the loaded image, saturation is changed by adding to it its value multiplied
             by a given factor which is calculated based on the slider value representing the percentage of change. Slider value is then clamped to the range of 0 to 1
             (for increasing the saturation) or to the range of -1 to 0 if a decrease in saturation was selected. The new pixel saturation value can be a maximum of 255 and a minimum of 0.
             Modified pixels by the given saturation value are then converted to the RGB model and saved to a new image.

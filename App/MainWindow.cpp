@@ -55,6 +55,9 @@ MainWindow::MainWindow()
     connect(loadButton, &QPushButton::pressed, this, &MainWindow::loadButtonPressed);
     connect(saturationSlider, &QSlider::valueChanged, this, &MainWindow::satSliderChanged);
     connect(threadsSlider, &QSlider::valueChanged, this, &MainWindow::threadsNumberChanged);
+
+    // set the initial value of the threads number slider
+    threadsSlider->setValue(std::thread::hardware_concurrency());
 }
 
 /*

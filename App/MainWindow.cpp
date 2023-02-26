@@ -10,6 +10,12 @@
 #include<filesystem>
 #include<cmath>
 #include<thread>
+#include<barrier>
+#include<latch>
+#define WIN32_LEAN_AND_MEAN
+#include<windows.h>
+#include<optional>
+#include<fstream>
 
 #define STBI_WINDOWS_UTF8
 #define STB_IMAGE_IMPLEMENTATION
@@ -226,13 +232,20 @@ void MainWindow::runButtonPressed()
     // create requested number of threads and run the algorithm
     vector<std::thread> threads;
 
-    std::atomic_bool Go = false;
+    std::optional<std::latch> start_latch(1);
+    std::barrier finish_barrier(threadsSlider->value() + 1);
+    std::atomic_bool threadsAlive = true;
+    std::barrier next_it_barrier(threadsSlider->value() + 1);
 
     auto threadFunction = [&](hsv* pixelBuffer, int bufferSize)
     {
-        while (!Go)
-        {}
-        selectedFunction(pixelBuffer, bufferSize, satLvl);
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+        while (threadsAlive) {
+            start_latch.value().wait();
+            selectedFunction(pixelBuffer, bufferSize, satLvl);
+            finish_barrier.arrive_and_wait();
+            next_it_barrier.arrive_and_wait();
+        }
     };
 
     const int pixelsCountPerThread = pixelsHSV.size() / threadsSlider->value();
@@ -246,24 +259,46 @@ void MainWindow::runButtonPressed()
         threads.push_back(std::thread(threadFunction, threadBufferStart, roundedPixelsCountPerThread));
     }
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    vector<double> results;
+    results.reserve(100);
+    const int numOfIterations = 30;
 
     // ---------- TIME MEASUREMENT ----------
 
-    auto start = std::chrono::high_resolution_clock::now();
-    Go = true;
+    for (int i = 0; i < numOfIterations; ++i)
+    {
+        auto start = std::chrono::high_resolution_clock::now();
+        start_latch.value().count_down();
+        finish_barrier.arrive_and_wait();
+        auto finish = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = (finish - start) * 1000;
+        results.push_back(elapsed.count());
+
+        threadsAlive = i+1 < numOfIterations;
+        start_latch.emplace(1);
+        next_it_barrier.arrive_and_wait();
+    }
+
+    std::sort(results.begin(), results.end());
+    results.erase(results.begin(), results.begin() + 3);
+    results.erase(results.end() - 3, results.end());
+
+    double elapsed = std::accumulate(results.begin(), results.end(), 0.0) / results.size();
+
+
+
 
     for (int i = 0; i < threadsSlider->value(); i++)
     {
         threads[i].join();
     }
 
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = (finish - start) * 1000;
 
     if (isCppChosen)
-        cppTimeLabel->setText( (getPrecisedValue(elapsed.count(), 2) + " ms").c_str() );
+        cppTimeLabel->setText( (getPrecisedValue(elapsed, 2) + " ms").c_str() );
     else
-        asmTimeLabel->setText( (getPrecisedValue(elapsed.count(), 2) + " ms").c_str() );
+        asmTimeLabel->setText( (getPrecisedValue(elapsed, 2) + " ms").c_str() );
 
 
     // ---------- IMAGE SAVE ----------
